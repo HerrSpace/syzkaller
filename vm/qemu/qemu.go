@@ -234,6 +234,13 @@ var archConfigs = map[string]*archConfig{
 			"kernel.halt-on-panic=true",
 		},
 	},
+	"serenity/386": {
+		Qemu:      "qemu-system-x86_64",
+		QemuArgs:  "-enable-kvm -cpu host,migratable=off",
+		TargetDir: "/tmp",
+		NetDev:    "e1000",
+		RngDev:    "virtio-rng-pci",
+	},
 	"akaros/amd64": {
 		Qemu:     "qemu-system-x86_64",
 		QemuArgs: "-enable-kvm -cpu host,migratable=off",

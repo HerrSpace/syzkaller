@@ -148,15 +148,16 @@ const (
 )
 
 var ctors = map[string]fn{
-	targets.Akaros:  ctorAkaros,
-	targets.Linux:   ctorLinux,
-	"gvisor":        ctorGvisor,
-	targets.FreeBSD: ctorFreebsd,
-	targets.Darwin:  ctorDarwin,
-	targets.NetBSD:  ctorNetbsd,
-	targets.OpenBSD: ctorOpenbsd,
-	targets.Fuchsia: ctorFuchsia,
-	targets.Windows: ctorStub,
+	targets.Akaros:   ctorAkaros,
+	targets.Linux:    ctorLinux,
+	"gvisor":         ctorGvisor,
+	targets.FreeBSD:  ctorFreebsd,
+	targets.Darwin:   ctorDarwin,
+	targets.NetBSD:   ctorNetbsd,
+	targets.OpenBSD:  ctorOpenbsd,
+	targets.Fuchsia:  ctorFuchsia,
+	targets.Serenity: ctorSerenity,
+	targets.Windows:  ctorStub,
 }
 
 type config struct {

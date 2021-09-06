@@ -128,7 +128,7 @@ func compile(cc string, args []string, data *CompileData) (string, []byte, error
 		return "", nil, err
 	}
 	args = append(args, []string{
-		"-x", "c", "-",
+		"-x", "c++", "-",
 		"-o", binFile,
 		"-w",
 	}...)
@@ -190,6 +190,7 @@ func extractFromELF(binFile string, targetEndian binary.ByteOrder) ([]uint64, er
 }
 
 var srcTemplate = template.Must(template.New("").Parse(`
+#define AK_DONT_REPLACE_STD 1
 {{if not .ExtractFromELF}}
 #define __asm__(...)
 {{end}}
@@ -214,7 +215,9 @@ var srcTemplate = template.Must(template.New("").Parse(`
 
 {{if .DeclarePrintf}}
 int printf(const char *format, ...);
+int printf(const char *format, ...){};
 {{end}}
+// #include <cstdio>
 
 {{if .ExtractFromELF}}
 __attribute__((section("syz_extract_data")))

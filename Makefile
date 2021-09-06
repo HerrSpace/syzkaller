@@ -89,6 +89,11 @@ ifeq ("$(TARGETOS)", "fuchsia")
 	TARGETGOARCH := $(HOSTARCH)
 endif
 
+ifeq ("$(TARGETOS)", "serenity")
+	TARGETGOOS := $(HOSTOS)
+	TARGETGOARCH := $(HOSTARCH)
+endif
+
 ifeq ("$(TARGETOS)", "trusty")
 	TARGETGOOS := $(HOSTOS)
 	TARGETGOARCH := $(HOSTARCH)
@@ -332,6 +337,7 @@ presubmit_arch_executor: descriptions
 	env TARGETOS=akaros TARGETARCH=amd64 $(MAKE) executor
 	env TARGETOS=fuchsia TARGETARCH=amd64 $(MAKE) executor
 	env TARGETOS=fuchsia TARGETARCH=arm64 $(MAKE) executor
+	env TARGETOS=serenity TARGETARCH=386 $(MAKE) executor
 	env TARGETOS=test TARGETARCH=64 $(MAKE) executor
 	env TARGETOS=test TARGETARCH=64_fork $(MAKE) executor
 	env TARGETOS=test TARGETARCH=32_shmem $(MAKE) executor

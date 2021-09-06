@@ -393,6 +393,8 @@ static void setup_features(char** enable, int n);
 #include "executor_linux.h"
 #elif GOOS_fuchsia
 #include "executor_fuchsia.h"
+#elif GOOS_serenity
+#include "excecutor_serenity.h"
 #elif GOOS_akaros
 #include "executor_akaros.h"
 #elif GOOS_freebsd || GOOS_netbsd || GOOS_openbsd

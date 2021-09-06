@@ -1,0 +1,79 @@
+# Copyright 2017 syzkaller project authors. All rights reserved.
+# Use of this source code is governed by Apache 2 LICENSE that can be found in the LICENSE file.
+
+include <sys/types.h>
+include <sys/stat.h>
+include <sys/param.h>
+include <fcntl.h>
+include <unistd.h>
+
+resource fd[int32]: 0xffffffffffffffff, AT_FDCWD
+resource fd_dir[fd]
+
+resource pid[int32]: 0, 0xffffffffffffffff
+resource uid[int32]: 0, 0xffffffffffffffff
+resource gid[int32]: 0, 0xffffffffffffffff
+
+open(file ptr[in, filename], flags flags[open_flags], mode flags[open_mode]) fd
+# Just so that we have something that creates fd_dir resources.
+open$dir(file ptr[in, filename], flags flags[open_flags], mode flags[open_mode]) fd_dir
+openat(fd fd_dir[opt], file ptr[in, filename], flags flags[open_flags], mode flags[open_mode]) fd
+close(fd fd)
+read(fd fd, buf buffer[out], count len[buf])
+pread(fd fd, buf buffer[out], count len[buf], off fileoff)
+write(fd fd, buf buffer[in], count len[buf])
+pwrite(fd fd, buf buffer[in], count len[buf], off fileoff)
+lseek(fd fd, offset fileoff, whence flags[seek_whence])
+dup(oldfd fd) fd
+dup2(oldfd fd, newfd fd) fd
+pipe2(pipefd ptr[out, pipefd], flags flags[pipe_flags])
+fstat(fd fd, statbuf ptr[out, stat])
+fstatat(fd fd, path ptr[in, filename], statbuf ptr[out, stat], flag flags[fstatat_flags])
+pathconf(file ptr[in, filename], name flags[conf_value])
+fpathconf(fd fd, name flags[conf_value])
+mount(type ptr[in, string[filesystem_types]], path ptr[in, filename], flags flags[mount_flags], data buffer[in])
+
+pipefd {
+	rfd	fd
+	wfd	fd
+}
+
+stat {
+	dev	int64
+	ino	int64
+	nlink	int64
+	mode	int16
+	__pad0	const[0, int16]
+	uid	uid
+	gid	gid
+	__pad1	const[0, int32]
+	rdev	int64
+	atime	int64
+	ansec	int64
+	mtime	int64
+	mnsec	int64
+	ctime	int64
+	cnsec	int64
+	btime	int64
+	bnsec	int64
+	size	int64
+	blocks	int64
+	blksize	int32
+	flags	int32
+	gen	int64
+	__spare	array[int64, 10]
+}
+
+define MFSNAMELEN	16
+define MNAMELEN	1025
+define STATFS_VERSION	0x20140518
+
+filesystem_types = "apfs", "cd9660", "exfat", "ext2fs", "geli", "hammer", "hammer2", "hfsp", "msdosfs", "ntfs", "ufs", "zfs"
+open_flags = O_RDONLY, O_WRONLY, O_RDWR, O_APPEND, O_CLOEXEC, O_CREAT, O_DIRECT, O_DIRECTORY, O_EXCL, O_NOCTTY, O_NOFOLLOW, O_NONBLOCK, O_SYNC, O_TRUNC, O_EXEC
+open_mode = S_IRUSR, S_IWUSR, S_IXUSR, S_IRGRP, S_IWGRP, S_IXGRP, S_IROTH, S_IWOTH, S_IXOTH
+#close_range_flags = 0
+seek_whence = SEEK_SET, SEEK_CUR, SEEK_END
+pipe_flags = O_NONBLOCK, O_CLOEXEC
+conf_value = _PC_NAME_MAX, _PC_PATH_MAX, _PC_PIPE_BUF, _PC_VDISABLE, _PC_LINK_MAX
+fstatat_flags = AT_SYMLINK_NOFOLLOW
+mount_flags = MS_NODEV, MS_NOEXEC, MS_NOSUID, MS_BIND, MS_RDONLY, MS_REMOUNT, MS_WXALLOWED

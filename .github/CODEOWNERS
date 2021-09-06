@@ -3,7 +3,9 @@
 
 *.py		@xairy
 *fuchsia*	@mvanotti
+*serenity*	@HerrSpace
 *freebsd*	@markjdb @tuexen
+*darwin*	@Herrspace
 *netbsd*	@krytarowski @R3x
 *openbsd*	@blackgnezdo @mptre
 *gvisor*	@avagin @dean-deng

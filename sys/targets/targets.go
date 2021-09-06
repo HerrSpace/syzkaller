@@ -117,16 +117,17 @@ type Timeouts struct {
 }
 
 const (
-	Akaros  = "akaros"
-	FreeBSD = "freebsd"
-	Darwin  = "darwin"
-	Fuchsia = "fuchsia"
-	Linux   = "linux"
-	NetBSD  = "netbsd"
-	OpenBSD = "openbsd"
-	TestOS  = "test"
-	Trusty  = "trusty"
-	Windows = "windows"
+	Akaros   = "akaros"
+	FreeBSD  = "freebsd"
+	Darwin   = "darwin"
+	Fuchsia  = "fuchsia"
+	Serenity = "serenity"
+	Linux    = "linux"
+	NetBSD   = "netbsd"
+	OpenBSD  = "openbsd"
+	TestOS   = "test"
+	Trusty   = "trusty"
+	Windows  = "windows"
 
 	AMD64               = "amd64"
 	ARM64               = "arm64"
@@ -419,6 +420,27 @@ var List = map[string]map[string]*Target{
 			CFlags:           fuchsiaCFlags(ARM64, "aarch64"),
 		},
 	},
+	Serenity: {
+		I386: {
+			// TODO: check these
+			VMArch:         AMD64,
+			PtrSize:        4,
+			PageSize:       4 << 10,
+			Int64Alignment: 4,
+			LittleEndian:   true,
+			CCompiler:      sourceDirVar + "/../Toolchain/Local/i686/bin/i686-pc-serenity-g++",
+			CFlags: []string{
+				"-std=c++20",
+				// Serenity is mostly developed in a monorepo and hence has
+				// strong opinions about how code should look. In their libc
+				// strncpy is deprecated in favour of strlcpy
+				"-Wno-deprecated-declarations",
+				"-I", sourceDirVar + "/../Build/i686/Root/usr/include/",
+				"-I", sourceDirVar + "/../Userland/Libraries/",
+				"-lsystem",
+			},
+		},
+	},
 	Windows: {
 		AMD64: {
 			PtrSize: 8,
@@ -521,6 +543,14 @@ var oses = map[string]osCommon{
 		HostFuzzer:             true,
 		ExecutorBin:            "syz-executor",
 		KernelObject:           "zircon.elf",
+	},
+	Serenity: {
+		BuildOS:                Linux,
+		SyscallNumbers:         false,
+		ExecutorUsesShmem:      false,
+		ExecutorUsesForkServer: false,
+		HostFuzzer:             true,
+		KernelObject:           "Kernel.debug",
 	},
 	Windows: {
 		SyscallNumbers:         false,
