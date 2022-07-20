@@ -99,7 +99,7 @@ func main() {
 		tool.Fail(err)
 	}
 	log.Printf("HEAD is on %v %v", head.Hash, head.Title)
-	tags, err := bisecter.PreviousReleaseTags(head.Hash)
+	tags, err := bisecter.PreviousReleaseTags(head.Hash, "gcc")
 	if err != nil {
 		tool.Fail(err)
 	}
@@ -123,7 +123,7 @@ func main() {
 }
 
 func test(repo vcs.Repo, bisecter vcs.Bisecter, kernelConfig []byte, env instance.Env, com *vcs.Commit) {
-	bisectEnv, err := bisecter.EnvForCommit(*flagBisectBin, com.Hash, kernelConfig)
+	bisectEnv, err := bisecter.EnvForCommit("gcc", *flagBisectBin, com.Hash, kernelConfig)
 	if err != nil {
 		tool.Fail(err)
 	}

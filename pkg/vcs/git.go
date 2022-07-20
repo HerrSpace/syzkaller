@@ -578,3 +578,37 @@ func (git *git) IsRelease(commit string) (bool, error) {
 	}
 	return len(tags1) != len(tags2), nil
 }
+
+func (git *git) contains(commit string) (bool, error) {
+	_, err := git.git("merge-base", "--is-ancestor", commit, "HEAD")
+	if err == nil {
+		// RC will be 0 if commit is present
+		return true, nil
+	}
+
+	ve, ok := err.(*osutil.VerboseError)
+	if !ok {
+		return false, fmt.Errorf("git merge-base resulted in unexpected error: %v", err)
+	}
+
+	if ve.ExitCode == 1 {
+		// RC will be 1 if commit is not present
+		return false, nil
+	}
+
+	return false, fmt.Errorf("git merge-base resulted in unexpected RC %d", ve.ExitCode)
+}
+
+func (git *git) cherryPickIfMissing(commit string) error {
+	contained, err := git.contains(commit)
+	if err != nil {
+		return err
+	}
+	if !contained {
+		_, err := git.git("cherry-pick", "--no-commit", commit)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

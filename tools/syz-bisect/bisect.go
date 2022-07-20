@@ -12,8 +12,8 @@
 // -kernel_commit. HEAD is used if commits are not specified.
 //
 // The crash dir should contain the following files:
-//  - repro.cprog or repro.prog: reproducer for the crash
-//  - repro.opts: syzkaller reproducer options (e.g. {"procs":1,"sandbox":"none",...}) (optional)
+//   - repro.cprog or repro.prog: reproducer for the crash
+//   - repro.opts: syzkaller reproducer options (e.g. {"procs":1,"sandbox":"none",...}) (optional)
 //
 // The tool stores bisection result into cause.commit or fix.commit.
 package main
@@ -43,10 +43,12 @@ var (
 )
 
 type Config struct {
+	// Defaults to 'gcc'. Usually either 'gcc' or 'clang'. Note that pkg/bisect
+	// requires explicit plumbing for every os/compiler combination.
+	CompilerFamily string `json:"compiler_family"`
 	// BinDir must point to a dir that contains compilers required to build
 	// older versions of the kernel. For linux, it needs to include several
-	// gcc versions. A working archive can be downloaded from:
-	// https://storage.googleapis.com/syzkaller/bisect_bin.tar.gz
+	// gcc versions.
 	BinDir        string `json:"bin_dir"`
 	Ccache        string `json:"ccache"`
 	KernelRepo    string `json:"kernel_repo"`
@@ -94,9 +96,10 @@ func main() {
 			TraceWriter: os.Stdout,
 			OutDir:      *flagCrash,
 		},
-		Fix:    *flagFix,
-		BinDir: mycfg.BinDir,
-		Ccache: mycfg.Ccache,
+		Fix:            *flagFix,
+		CompilerFamily: mycfg.CompilerFamily,
+		BinDir:         mycfg.BinDir,
+		Ccache:         mycfg.Ccache,
 		Kernel: bisect.KernelConfig{
 			Repo:      mycfg.KernelRepo,
 			Branch:    mycfg.KernelBranch,

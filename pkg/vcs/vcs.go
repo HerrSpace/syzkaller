@@ -74,11 +74,11 @@ type Bisecter interface {
 
 	// PreviousReleaseTags returns list of preceding release tags that are reachable from the given commit.
 	// If the commit itself has a release tag, this tag is not included.
-	PreviousReleaseTags(commit string) ([]string, error)
+	PreviousReleaseTags(commit, compilerFamily string) ([]string, error)
 
 	IsRelease(commit string) (bool, error)
 
-	EnvForCommit(binDir, commit string, kernelConfig []byte) (*BisectEnv, error)
+	EnvForCommit(compilerFamily, binDir, commit string, kernelConfig []byte) (*BisectEnv, error)
 }
 
 type ConfigMinimizer interface {

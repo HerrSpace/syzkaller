@@ -99,10 +99,16 @@ type Config struct {
 	CoverUploadPath string `json:"cover_upload_path"`
 	// Path to upload corpus.db from managers (optional).
 	// Supported protocols: GCS (gs://) and HTTP PUT (http:// or https://).
-	CorpusUploadPath string           `json:"corpus_upload_path"`
-	BisectBinDir     string           `json:"bisect_bin_dir"`
-	Ccache           string           `json:"ccache"`
-	Managers         []*ManagerConfig `json:"managers"`
+	CorpusUploadPath string `json:"corpus_upload_path"`
+	// Defaults to 'gcc'. Usually either 'gcc' or 'clang'. Note that pkg/bisect
+	// requires explicit plumbing for every os/compiler combination.
+	BisectCompilerFamily string `json:"bisect_compiler_family"`
+	// BinDir must point to a dir that contains compilers required to build
+	// older versions of the kernel. For linux, it needs to include several
+	// gcc versions.
+	BisectBinDir string           `json:"bisect_bin_dir"`
+	Ccache       string           `json:"ccache"`
+	Managers     []*ManagerConfig `json:"managers"`
 	// Poll period for jobs in seconds (optional, defaults to 10 seconds)
 	JobPollPeriod int `json:"job_poll_period"`
 	// Poll period for commits in seconds (optional, defaults to 3600 seconds)
