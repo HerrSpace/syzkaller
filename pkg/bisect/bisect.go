@@ -5,6 +5,7 @@ package bisect
 
 import (
 	"fmt"
+	"runtime/debug"
 	"time"
 
 	"github.com/google/syzkaller/pkg/build"
@@ -468,6 +469,7 @@ func (env *env) test() (*testResult, error) {
 
 	results, err := env.inst.Test(numTests, cfg.Repro.Syz, cfg.Repro.Opts, cfg.Repro.C)
 	env.testTime += time.Since(testStart)
+	fmt.Println("env.inst.Test", results, err, current)
 	if err != nil {
 		env.log("failed: %v", err)
 		return res, nil
@@ -530,6 +532,7 @@ func (env *env) processResults(current *vcs.Commit, results []instance.EnvTestRe
 		unique[verdict] = true
 	}
 	if len(unique) == 1 {
+		debug.PrintStack()
 		env.log("all runs: %v", verdicts[0])
 	} else {
 		for i, verdict := range verdicts {

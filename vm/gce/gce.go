@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -180,6 +181,8 @@ func (pool *Pool) Create(workdir string, index int) (vmimpl.Instance, error) {
 		}
 		return nil, vmimpl.MakeBootError(err, output)
 	}
+	log.Logf(0, "instance booted: %v (%v)", name, ip)
+	debug.PrintStack()
 	ok = true
 	inst := &instance{
 		env:     pool.env,

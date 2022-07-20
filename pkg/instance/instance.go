@@ -215,14 +215,17 @@ func (err *CrashError) Error() string {
 // CrashError is returned if the reproducer crashes kernel.
 func (env *env) Test(numVMs int, reproSyz, reproOpts, reproC []byte) ([]EnvTestResult, error) {
 	if err := mgrconfig.Complete(env.cfg); err != nil {
+		fmt.Println("6")
 		return nil, err
 	}
 	reporter, err := report.NewReporter(env.cfg)
 	if err != nil {
+		fmt.Println("7")
 		return nil, err
 	}
 	vmPool, err := vm.Create(env.cfg, false)
 	if err != nil {
+		fmt.Println("8")
 		return nil, fmt.Errorf("failed to create VM pool: %v", err)
 	}
 	if n := vmPool.Count(); numVMs > n {
@@ -237,15 +240,18 @@ func (env *env) Test(numVMs int, reproSyz, reproOpts, reproC []byte) ([]EnvTestR
 			vmPool:        vmPool,
 			vmIndex:       i,
 			reproSyz:      reproSyz,
-			reproOpts:     reproOpts,
+			reproOpts:     reproOpts, //
 			reproC:        reproC,
 		}
+		// here
+		fmt.Println("9", inst)
 		go func() { res <- inst.test() }()
 	}
 	var ret []EnvTestResult
 	for i := 0; i < numVMs; i++ {
 		ret = append(ret, <-res)
 	}
+	fmt.Println("10")
 	return ret, nil
 }
 
@@ -299,15 +305,20 @@ func (inst *inst) test() EnvTestResult {
 		}
 		return ret
 	}
+	log.Logf(0, "1")
 	defer vmInst.Close()
+	log.Logf(0, "2")
 	inst.vm = vmInst
 	ret := EnvTestResult{}
+	log.Logf(0, "3")
 	if ret.Error = inst.testInstance(); ret.Error != nil {
 		return ret
 	}
+	log.Logf(0, "4")
 	if len(inst.reproSyz) != 0 || len(inst.reproC) != 0 {
 		ret.RawOutput, ret.Error = inst.testRepro()
 	}
+	log.Logf(0, "5")
 	return ret
 }
 
@@ -374,27 +385,36 @@ func (inst *inst) testInstance() error {
 }
 
 func (inst *inst) testRepro() ([]byte, error) {
+	//  [{unexpected EOF []} {unexpected EOF []}] here
+	// maybe the reproducers don't reproduce?
+	// but that's expected on head..
 	var err error
 	execProg, err := SetupExecProg(inst.vm, inst.cfg, inst.reporter, &OptionalConfig{
 		OldFlagsCompatMode: !inst.optionalFlags,
 	})
 	if err != nil {
+		fmt.Println(("a"))
 		return nil, err
 	}
 	transformError := func(res *RunResult, err error) ([]byte, error) {
 		if err != nil {
+			fmt.Println(("b"))
 			return nil, err
 		}
 		if res != nil && res.Report != nil {
+			fmt.Println(("c"))
 			return res.RawOutput, &CrashError{Report: res.Report}
 		}
+		fmt.Println(("d"))
 		return res.RawOutput, nil
 	}
 	out := []byte{}
 	if len(inst.reproSyz) > 0 {
 		var opts csource.Options
+		fmt.Println(inst)
 		opts, err = csource.DeserializeOptions(inst.reproOpts)
 		if err != nil {
+			fmt.Println(("e"))
 			return nil, err
 		}
 		// Combine repro options and default options in a way that increases chances to reproduce the crash.
@@ -414,6 +434,7 @@ func (inst *inst) testRepro() ([]byte, error) {
 		out, err = transformError(execProg.RunCProgRaw(inst.reproC, inst.cfg.Target,
 			inst.cfg.Timeouts.NoOutput/2))
 	}
+	fmt.Println(("f"))
 	return out, err
 }
 

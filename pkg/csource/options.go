@@ -198,6 +198,7 @@ func (opts Options) Serialize() []byte {
 }
 
 func DeserializeOptions(data []byte) (Options, error) {
+	fmt.Println("DeserializeOptions", data)
 	opts := Options{
 		Slowdown: 1,
 		// Before CloseFDs was added, close_fds() was always called, so default to true.
@@ -232,6 +233,8 @@ func DeserializeOptions(data []byte) (Options, error) {
 		&opts.Threaded, &opts.Collide, &opts.Repeat, &opts.Procs, &opts.Sandbox,
 		&opts.Fault, &opts.FaultCall, &opts.FaultNth, &opts.NetInjection, &opts.UseTmpDir,
 		&opts.Cgroups, &opts.HandleSegv, &waitRepeat, &debug, &opts.Repro)
+	fmt.Println("DeserializeOptions", n, err)
+
 	if err == nil {
 		if want := 15; n != want {
 			return opts, fmt.Errorf("failed to parse repro options: got %v fields, want %v", n, want)

@@ -170,7 +170,8 @@ func runMakeImpl(arch, compiler, ccache, kernelDir string, addArgs ...string) er
 		"KERNELVERSION=syzkaller",
 		"LOCALVERSION=-syzkaller",
 	)
-	_, err := osutil.Run(time.Hour, cmd)
+	out, err := osutil.Run(time.Hour, cmd)
+	fmt.Println(string(out))
 	return err
 }
 
