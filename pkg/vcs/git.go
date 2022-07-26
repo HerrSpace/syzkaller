@@ -23,14 +23,16 @@ import (
 
 type git struct {
 	dir      string
+	tagGlob  string
 	ignoreCC map[string]bool
 	precious bool
 	sandbox  bool
 }
 
-func newGit(dir string, ignoreCC map[string]bool, opts []RepoOpt) *git {
+func newGit(dir, tagGlob string, ignoreCC map[string]bool, opts []RepoOpt) *git {
 	git := &git{
 		dir:      dir,
+		tagGlob:  tagGlob,
 		ignoreCC: ignoreCC,
 		sandbox:  true,
 	}
@@ -536,9 +538,15 @@ func (git *git) ReleaseTag(commit string) (string, error) {
 }
 
 func (git *git) previousReleaseTags(commit string, self, onlyTop, includeRC bool) ([]string, error) {
+	tagGlob := git.tagGlob
+	if tagGlob == "" {
+		// This was the default before, so fallback to default glob if not specified
+		tagGlob = "v*.*"
+	}
+
 	var tags []string
 	if self {
-		output, err := git.git("tag", "--list", "--points-at", commit, "--merged", commit, "v*.*")
+		output, err := git.git("tag", "--list", "--points-at", commit, "--merged", commit, tagGlob)
 		if err != nil {
 			return nil, err
 		}
@@ -547,7 +555,7 @@ func (git *git) previousReleaseTags(commit string, self, onlyTop, includeRC bool
 			return tags, nil
 		}
 	}
-	output, err := git.git("tag", "--no-contains", commit, "--merged", commit, "v*.*")
+	output, err := git.git("tag", "--no-contains", commit, "--merged", commit, tagGlob)
 	if err != nil {
 		return nil, err
 	}

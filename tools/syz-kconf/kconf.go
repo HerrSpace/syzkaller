@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/google/syzkaller/pkg/kconfig"
+	"github.com/google/syzkaller/pkg/mgrconfig"
 	"github.com/google/syzkaller/pkg/osutil"
 	"github.com/google/syzkaller/pkg/tool"
 	"github.com/google/syzkaller/pkg/vcs"
@@ -47,7 +48,8 @@ func main() {
 	if *flagSourceDir == "" {
 		tool.Failf("missing mandatory flag -sourcedir")
 	}
-	repo, err := vcs.NewRepo(targets.Linux, "", *flagSourceDir, vcs.OptPrecious)
+	mgrcfg := &mgrconfig.Config{}
+	repo, err := vcs.NewRepo(targets.Linux, "", *flagSourceDir, mgrcfg.KernelTagGlob, vcs.OptPrecious)
 	if err != nil {
 		tool.Failf("failed to create repo: %v", err)
 	}

@@ -89,7 +89,7 @@ func main() {
 	if err := mgrconfig.Complete(cfg); err != nil {
 		tool.Fail(err)
 	}
-	repo, err := vcs.NewRepo(*flagOS, vmType, *flagKernelSrc)
+	repo, err := vcs.NewRepo(*flagOS, vmType, cfg.KernelTagGlob, *flagKernelSrc)
 	if err != nil {
 		tool.Fail(err)
 	}

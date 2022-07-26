@@ -111,7 +111,7 @@ func Run(cfg *Config) (*Result, error) {
 		return nil, err
 	}
 	cfg.Manager.Cover = false // it's not supported somewhere back in time
-	repo, err := vcs.NewRepo(cfg.Manager.TargetOS, cfg.Manager.Type, cfg.Manager.KernelSrc)
+	repo, err := vcs.NewRepo(cfg.Manager.TargetOS, cfg.Manager.Type, cfg.Manager.KernelSrc, cfg.Manager.KernelTagGlob)
 	if err != nil {
 		return nil, err
 	}

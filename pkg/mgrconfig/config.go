@@ -48,6 +48,7 @@ type Config struct {
 	KernelSrc string `json:"kernel_src,omitempty"`
 	// Location of the driectory where the kernel was built (if not set defaults to KernelSrc)
 	KernelBuildSrc string `json:"kernel_build_src,omitempty"`
+	KernelTagGlob  string `json:"kernel_tag_glob,omitempty"`
 	// Kernel subsystem with paths to each subsystem
 	//	"kernel_subsystem": [
 	//		{ "name": "sound", "path": ["sound", "techpack/audio"]},

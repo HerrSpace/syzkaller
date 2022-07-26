@@ -30,12 +30,12 @@ var (
 	_ ConfigMinimizer = new(linux)
 )
 
-func newLinux(dir string, opts []RepoOpt) *linux {
+func newLinux(dir, tagGlob string, opts []RepoOpt) *linux {
 	ignoreCC := map[string]bool{
 		"stable@vger.kernel.org": true,
 	}
 	return &linux{
-		git: newGit(dir, ignoreCC, opts),
+		git: newGit(dir, tagGlob, ignoreCC, opts),
 	}
 }
 

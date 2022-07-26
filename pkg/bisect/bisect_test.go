@@ -109,7 +109,16 @@ func createTestRepo(t *testing.T) string {
 }
 
 func runBisection(t *testing.T, baseDir string, test BisectionTest) (*Result, error) {
-	r, err := vcs.NewRepo(targets.TestOS, targets.TestArch64, baseDir, vcs.OptPrecious)
+	mgrcfg := &mgrconfig.Config{
+		Derived: mgrconfig.Derived{
+			TargetOS:     targets.TestOS,
+			TargetVMArch: targets.TestArch64,
+		},
+		Type:      "qemu",
+		KernelSrc: baseDir,
+	}
+
+	r, err := vcs.NewRepo(targets.TestOS, targets.TestArch64, baseDir, mgrcfg.KernelTagGlob, vcs.OptPrecious)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,16 +128,9 @@ func runBisection(t *testing.T, baseDir string, test BisectionTest) (*Result, er
 		t.Fatal(err)
 	}
 	cfg := &Config{
-		Fix:   test.fix,
-		Trace: &debugtracer.TestTracer{T: t},
-		Manager: &mgrconfig.Config{
-			Derived: mgrconfig.Derived{
-				TargetOS:     targets.TestOS,
-				TargetVMArch: targets.TestArch64,
-			},
-			Type:      "qemu",
-			KernelSrc: baseDir,
-		},
+		Fix:     test.fix,
+		Trace:   &debugtracer.TestTracer{T: t},
+		Manager: mgrcfg,
 		Kernel: KernelConfig{
 			Repo:           baseDir,
 			Commit:         sc.Hash,

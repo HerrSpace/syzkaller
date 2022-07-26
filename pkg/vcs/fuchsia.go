@@ -16,10 +16,10 @@ type fuchsia struct {
 	repo *git
 }
 
-func newFuchsia(dir string, opts []RepoOpt) *fuchsia {
+func newFuchsia(dir, tagGlob string, opts []RepoOpt) *fuchsia {
 	return &fuchsia{
 		dir:  dir,
-		repo: newGit(dir, nil, opts),
+		repo: newGit(dir, tagGlob, nil, opts),
 	}
 }
 
