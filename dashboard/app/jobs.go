@@ -386,9 +386,6 @@ func findBugsForBisection(c context.Context, managers map[string]bool,
 		if crash == nil {
 			continue
 		}
-		if jobType == JobBisectFix && timeSince(c, bug.LastTime) < 24*30*time.Hour {
-			continue
-		}
 		return createBisectJobForBug(c, bug, crash, keys[bi], crashKey, jobType)
 	}
 	return nil, nil, nil
@@ -546,7 +543,7 @@ func createJobResp(c context.Context, job *Job, jobKey *db.Key) (*dashapi.JobPol
 		KernelCommitTitle: build.KernelCommitTitle,
 		KernelCommitDate:  build.KernelCommitDate,
 		KernelConfig:      kernelConfig,
-		SyzkallerCommit:   build.SyzkallerCommit,
+		SyzkallerCommit:   "HEAD",
 		Patch:             patch,
 		ReproOpts:         crash.ReproOpts,
 		ReproSyz:          reproSyz,
