@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/google/syzkaller/pkg/debugtracer"
+	"github.com/google/syzkaller/pkg/log"
 	"github.com/google/syzkaller/pkg/osutil"
 	"github.com/google/syzkaller/sys/targets"
 )
@@ -170,8 +171,13 @@ func runMakeImpl(arch, compiler, ccache, kernelDir string, addArgs ...string) er
 		"KERNELVERSION=syzkaller",
 		"LOCALVERSION=-syzkaller",
 	)
-	_, err := osutil.Run(time.Hour, cmd)
-	return err
+	out, err := osutil.Run(time.Hour, cmd)
+	if err != nil {
+		makeErr := fmt.Errorf("kernel make failed: %w", err)
+		log.Logf(2, "%v, kernel make output: %v\n", makeErr, string(out))
+		return makeErr
+	}
+	return nil
 }
 
 func runMake(params Params, addArgs ...string) error {
