@@ -28,6 +28,14 @@ type git struct {
 	sandbox  bool
 }
 
+type NoTagsFoundError struct {
+	Msg string
+}
+
+func (err *NoTagsFoundError) Error() string {
+	return err.Msg
+}
+
 func newGit(dir string, ignoreCC map[string]bool, opts []RepoOpt) *git {
 	git := &git{
 		dir:      dir,
@@ -540,9 +548,6 @@ func (git *git) ReleaseTag(commit string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if len(tags) == 0 {
-		return "", fmt.Errorf("no release tags found for commit %v", commit)
-	}
 	return tags[0], nil
 }
 
@@ -569,7 +574,9 @@ func (git *git) previousReleaseTags(commit string, self, onlyTop, includeRC bool
 	tags = append(tags, tags1...)
 	fmt.Printf("%v\n}}}\n", tags)
 	if len(tags) == 0 {
-		return nil, fmt.Errorf("no release tags found for commit %v", commit)
+		return nil, &NoTagsFoundError{
+			Msg: fmt.Sprintf("no release tags found for commit %v", commit),
+		}
 	}
 	return tags, nil
 }
@@ -584,4 +591,28 @@ func (git *git) IsRelease(commit string) (bool, error) {
 		return false, err
 	}
 	return len(tags1) != len(tags2), nil
+}
+
+// FIXME: this doesn't work, as the origin is not names origin during bisect, but some hash
+func (git *git) findMerge(commit, branch string) (string, error) {
+	// all commits between `commit` and the HEAD of `branch`, that are based on commit
+	children, err := git.git("rev-list", "--ancestry-path", "--reverse", commit+"..origin/"+branch)
+	if err != nil {
+		return "", err
+	}
+
+	// all merges on the top level of `branch` between `commit` and the HEAD of `branch`
+	merges, err := git.git("rev-list", "--first-parent", "--merges", "--reverse", commit+"..origin/"+branch)
+	if err != nil {
+		return "", err
+	}
+
+	// find first top level merge, that contains `commit` in its history
+	for _, child := range bytes.Split(children, []byte("\n")) {
+		if bytes.Contains(merges, child) {
+			return string(child), nil
+		}
+	}
+
+	return "", fmt.Errorf("couldn't find a merge commit merging commit %v into branch %v", commit, branch)
 }

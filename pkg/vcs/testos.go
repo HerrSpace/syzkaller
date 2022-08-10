@@ -26,7 +26,7 @@ func (ctx *testos) PreviousReleaseTags(commit, bisectCompiler string) ([]string,
 	return ctx.git.previousReleaseTags(commit, false, false, false)
 }
 
-func (ctx *testos) EnvForCommit(bisectCompiler, binDir, commit string, kernelConfig []byte) (*BisectEnv, error) {
+func (ctx *testos) EnvForCommit(bisectCompiler, binDir, commit, branch string, kernelConfig []byte) (*BisectEnv, error) {
 	return &BisectEnv{KernelConfig: kernelConfig}, nil
 }
 

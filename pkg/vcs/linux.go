@@ -5,6 +5,7 @@ package vcs
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/mail"
 	"path/filepath"
@@ -132,11 +133,27 @@ func gitReleaseTagToInt(tag string, includeRC bool) uint64 {
 	return v1*1e9 + v2*1e6 + rc*1e3 + v3
 }
 
-func (ctx *linux) EnvForCommit(bisectCompiler, binDir, commit string, kernelConfig []byte) (*BisectEnv, error) {
+func (ctx *linux) EnvForCommit(bisectCompiler, binDir, commit, branch string, kernelConfig []byte) (*BisectEnv, error) {
 	tagList, err := ctx.previousReleaseTags(commit, true, false, false)
-	if err != nil {
+	var tagErr *NoTagsFoundError
+	switch {
+	case errors.As(err, &tagErr):
+		// Bisection might land on commit from a subtree merge. The merged subtree won't contain
+		// the tags we are looking for. Instead of just skipping the commit, let's try to move
+		// forward in history to the subtree merge and look backwards for the previous release tag
+		// from there.
+		merge, err := ctx.git.findMerge(commit, branch)
+		if err != nil {
+			return nil, fmt.Errorf("%v and fallback merge commit search failed: %w", tagErr, err)
+		}
+		tagList, err = ctx.previousReleaseTags(merge, true, false, false)
+		if err != nil {
+			return nil, fmt.Errorf("%v, nor for its merge commit %v", tagErr, merge)
+		}
+	case err != nil:
 		return nil, err
 	}
+
 	tags := make(map[string]bool)
 	for _, tag := range tagList {
 		tags[tag] = true

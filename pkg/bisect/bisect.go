@@ -422,7 +422,7 @@ func (env *env) build() (*vcs.Commit, string, error) {
 		return nil, "", err
 	}
 
-	bisectEnv, err := env.bisecter.EnvForCommit(env.cfg.BisectCompiler, env.cfg.BinDir, current.Hash, env.kernelConfig)
+	bisectEnv, err := env.bisecter.EnvForCommit(env.cfg.BisectCompiler, env.cfg.BinDir, current.Hash, env.cfg.Kernel.Branch, env.kernelConfig)
 	if err != nil {
 		fmt.Println(err.Error())
 		return current, "", err
