@@ -429,6 +429,10 @@ func (git *git) git(args ...string) ([]byte, error) {
 	cmd := osutil.Command("git", args...)
 	cmd.Dir = git.dir
 	cmd.Env = filterEnv()
+
+	fmt.Printf("git args: %v\n", args)
+	// fmt.Printf("git dir: %v\n", git.dir)
+	// fmt.Printf("git env: %v\n", cmd.Env)
 	if git.sandbox {
 		if err := osutil.Sandbox(cmd, true, false); err != nil {
 			return nil, err
@@ -467,6 +471,7 @@ func (git *git) Bisect(bad, good string, dt debugtracer.DebugTracer, pred func()
 	}
 	defer git.reset()
 	dt.Log("# git bisect start %v %v\n%s", bad, good, output)
+	fmt.Printf("# git bisect start %v %v\n%s", bad, good, output)
 	current, err := git.HeadCommit()
 	if err != nil {
 		return nil, err
@@ -488,6 +493,7 @@ func (git *git) Bisect(bad, good string, dt debugtracer.DebugTracer, pred func()
 		}
 		output, err = git.git("bisect", bisectTerms[res])
 		dt.Log("# git bisect %v %v\n%s", bisectTerms[res], current.Hash, output)
+		fmt.Printf("# git bisect %v %v\n%s", bisectTerms[res], current.Hash, output)
 		if err != nil {
 			if bytes.Contains(output, []byte("There are only 'skip'ped commits left to test")) {
 				return git.bisectInconclusive(output)
@@ -542,11 +548,13 @@ func (git *git) ReleaseTag(commit string) (string, error) {
 
 func (git *git) previousReleaseTags(commit string, self, onlyTop, includeRC bool) ([]string, error) {
 	var tags []string
+	fmt.Printf("{{{ previousReleaseTags(%v, %v, %v, %v)\n", commit, self, onlyTop, includeRC)
 	if self {
 		output, err := git.git("tag", "--list", "--points-at", commit, "--merged", commit, "v*.*")
 		if err != nil {
 			return nil, err
 		}
+		fmt.Printf("1: %v\n", strings.Replace(string(output), "\n", " ", -1))
 		tags = gitParseReleaseTags(output, includeRC)
 		if onlyTop && len(tags) != 0 {
 			return tags, nil
@@ -556,8 +564,10 @@ func (git *git) previousReleaseTags(commit string, self, onlyTop, includeRC bool
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("2: %v\n", strings.Replace(string(output), "\n", " ", -1))
 	tags1 := gitParseReleaseTags(output, includeRC)
 	tags = append(tags, tags1...)
+	fmt.Printf("%v\n}}}\n", tags)
 	if len(tags) == 0 {
 		return nil, fmt.Errorf("no release tags found for commit %v", commit)
 	}

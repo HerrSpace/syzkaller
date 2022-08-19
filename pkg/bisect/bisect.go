@@ -216,6 +216,7 @@ func (env *env) bisect() (*Result, error) {
 	if _, err := env.inst.BuildSyzkaller(cfg.Syzkaller.Repo, cfg.Syzkaller.Commit); err != nil {
 		return nil, err
 	}
+	fmt.Printf("ensuring issue is reproducible on original commit %v\n", cfg.Kernel.Commit)
 	com, err := env.repo.CheckoutCommit(cfg.Kernel.Repo, cfg.Kernel.Commit)
 	if err != nil {
 		return nil, err
@@ -423,6 +424,7 @@ func (env *env) build() (*vcs.Commit, string, error) {
 
 	bisectEnv, err := env.bisecter.EnvForCommit(env.cfg.BisectCompiler, env.cfg.BinDir, current.Hash, env.kernelConfig)
 	if err != nil {
+		fmt.Println(err.Error())
 		return current, "", err
 	}
 	env.log("testing commit %v %v", current.Hash, env.cfg.BisectCompiler)
