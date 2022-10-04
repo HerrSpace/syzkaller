@@ -900,5 +900,6 @@ func checkConfig(cfg *Config) error {
 }
 
 func (env *env) log(msg string, args ...interface{}) {
+	fmt.Printf(msg+"\n", args...)
 	env.cfg.Trace.Log(msg, args...)
 }
