@@ -252,13 +252,22 @@ func (env *env) bisect() (*Result, error) {
 		}
 	}
 
-	bad, good, rep1, results1, err := env.commitRange()
+	bad, good, results1, err := env.commitRange()
 	if err != nil {
 		return nil, err
 	}
-	if rep1 != nil {
-		return &Result{Report: rep1, Commit: bad, Config: env.kernelConfig},
-			nil // still not fixed/happens on the oldest release
+	if len(results1) < 1 {
+		return nil, fmt.Errorf("commitRange returned no results")
+	}
+	// result for HEAD in fix bisection or oldest tested commit in cause bisection
+	finalResult := results1[len(results1)-1]
+	if finalResult.verdict != vcs.BisectGood {
+		// still not fixed/happens on the oldest release
+		return &Result{
+			Report: finalResult.rep,
+			Commit: bad,
+			Config: env.kernelConfig,
+		}, nil
 	}
 	if good == nil {
 		// Special case: all previous releases are build broken.
@@ -400,60 +409,58 @@ func (env *env) detectNoopChange(results map[string]*testResult, com *vcs.Commit
 	return testRes.kernelSign == parentRes.kernelSign, nil
 }
 
-func (env *env) commitRange() (*vcs.Commit, *vcs.Commit, *report.Report, []*testResult, error) {
+func (env *env) commitRange() (*vcs.Commit, *vcs.Commit, []*testResult, error) {
 	if env.cfg.Fix {
 		return env.commitRangeForFix()
 	}
 	return env.commitRangeForBug()
 }
 
-func (env *env) commitRangeForFix() (*vcs.Commit, *vcs.Commit, *report.Report, []*testResult, error) {
+func (env *env) commitRangeForFix() (*vcs.Commit, *vcs.Commit, []*testResult, error) {
 	env.log("testing current HEAD %v", env.head.Hash)
 	if _, err := env.repo.SwitchCommit(env.head.Hash); err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, err
 	}
 	res, err := env.test()
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, err
 	}
 	if res.verdict != vcs.BisectGood {
-		return env.head, nil, res.rep, []*testResult{res}, nil
+		return env.head, nil, []*testResult{res}, nil
 	}
-	return env.head, env.commit, nil, []*testResult{res}, nil
+	return env.head, env.commit, []*testResult{res}, nil
 }
 
-func (env *env) commitRangeForBug() (*vcs.Commit, *vcs.Commit, *report.Report, []*testResult, error) {
+func (env *env) commitRangeForBug() (*vcs.Commit, *vcs.Commit, []*testResult, error) {
 	cfg := env.cfg
 	tags, err := env.bisecter.PreviousReleaseTags(cfg.Kernel.Commit, cfg.CompilerType)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, err
 	}
 	if len(tags) == 0 {
-		return nil, nil, nil, nil, fmt.Errorf("no release tags before this commit")
+		return nil, nil, nil, fmt.Errorf("no release tags before this commit")
 	}
 	lastBad := env.commit
-	var lastRep *report.Report
 	var results []*testResult
 	for _, tag := range tags {
 		env.log("testing release %v", tag)
 		com, err := env.repo.SwitchCommit(tag)
 		if err != nil {
-			return nil, nil, nil, nil, err
+			return nil, nil, nil, err
 		}
 		res, err := env.test()
 		if err != nil {
-			return nil, nil, nil, nil, err
+			return nil, nil, nil, err
 		}
 		results = append(results, res)
 		if res.verdict == vcs.BisectGood {
-			return lastBad, com, nil, results, nil
+			return lastBad, com, results, nil
 		}
 		if res.verdict == vcs.BisectBad {
 			lastBad = com
-			lastRep = res.rep
 		}
 	}
-	return lastBad, nil, lastRep, results, nil
+	return lastBad, nil, results, nil
 }
 
 type testResult struct {
@@ -502,6 +509,7 @@ func (env *env) build() (*vcs.Commit, string, error) {
 
 // Note: When this function returns an error, the bisection it was called from is aborted.
 // Hence recoverable errors must be handled and the callers must treat testResult with care.
+// e.g. testResult.verdict will be vcs.BisectSkip for a broken build, but err will be nil.
 func (env *env) test() (*testResult, error) {
 	cfg := env.cfg
 	if cfg.Timeout != 0 && time.Since(env.startTime) > cfg.Timeout {
