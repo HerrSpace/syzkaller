@@ -693,17 +693,6 @@ func shouldBisectBug(c context.Context, bug *Bug, managers map[string]bool, jobT
 		return false
 	}
 
-	// There likely is no fix yet, as the bug recently reproduced.
-	const fixJobRepeat = 24 * 30 * time.Hour
-	if jobType == JobBisectFix && timeSince(c, bug.LastTime) < fixJobRepeat {
-		return false
-	}
-	// Likely to find the same (invalid) result without admin intervention, don't try too often.
-	const causeJobRepeat = 24 * 7 * time.Hour
-	if jobType == JobBisectCause && timeSince(c, bug.LastCauseBisect) < causeJobRepeat {
-		return false
-	}
-
 	// Ensure one of the managers the bug reproduced on is taking bisection jobs.
 	for _, mgr := range bug.HappenedOn {
 		if managers[mgr] {
