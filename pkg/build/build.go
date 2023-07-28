@@ -29,6 +29,8 @@ type Params struct {
 	VMType       string
 	KernelDir    string
 	OutputDir    string
+	ToolchainDir string // Use different toolchain versions based on kernel version.
+	CompilerType string // Pick default compiler/linker/... names based on CompilerType.
 	Compiler     string
 	Linker       string
 	Ccache       string
@@ -90,7 +92,7 @@ func Image(params Params) (details ImageDetails, err error) {
 	if details.CompilerID == "" {
 		// Fill in the compiler info even if the build failed.
 		var idErr error
-		details.CompilerID, idErr = compilerIdentity(params.Compiler)
+		details.CompilerID, idErr = compilerIdentity(params.Compiler, params.ToolchainDir)
 		if err == nil {
 			err = idErr
 		} // Try to preserve the build error otherwise.
@@ -157,7 +159,7 @@ func getBuilder(targetOS, targetArch, vmType string) (builder, error) {
 	return nil, fmt.Errorf("unsupported image type %v/%v/%v", targetOS, targetArch, vmType)
 }
 
-func compilerIdentity(compiler string) (string, error) {
+func compilerIdentity(compiler, toolchainDir string) (string, error) {
 	if compiler == "" {
 		return "", nil
 	}
@@ -169,7 +171,14 @@ func compilerIdentity(compiler string) (string, error) {
 		// Bazel episodically fails with 1 min timeout.
 		arg, timeout = "", 10*time.Minute
 	}
-	output, err := osutil.RunCmd(timeout, "", compiler, arg)
+	toolchainPathEnv := os.Getenv("PATH")
+	if toolchainDir != "" {
+		toolchainPathEnv = fmt.Sprintf("PATH=%s:%s", toolchainDir, toolchainPathEnv)
+	}
+	cmd := osutil.Command(compiler, arg)
+	cmd.Env = append([]string{}, os.Environ()...)
+	cmd.Env = append(cmd.Env, toolchainPathEnv)
+	output, err := osutil.Run(timeout, cmd)
 	if err != nil {
 		return "", err
 	}

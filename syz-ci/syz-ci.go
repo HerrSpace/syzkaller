@@ -412,6 +412,9 @@ func loadManagerConfig(cfg *Config, mgr *ManagerConfig) error {
 	if mgr.CompilerType == "" {
 		mgr.CompilerType = "gcc"
 	}
+	if mgr.Compiler == "" {
+		mgr.Compiler = mgr.CompilerType
+	}
 	if mgr.Branch == "" {
 		mgr.Branch = "master"
 	}

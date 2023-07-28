@@ -173,8 +173,10 @@ const (
 )
 
 type BisectEnv struct {
-	Compiler     string
-	KernelConfig []byte
+	Compiler       string
+	CompilerFamily string
+	ToolchainDir   string
+	KernelConfig   []byte
 }
 
 type RepoOpt int
