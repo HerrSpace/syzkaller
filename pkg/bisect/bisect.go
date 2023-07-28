@@ -584,6 +584,8 @@ func (env *env) build() (*vcs.Commit, string, error) {
 	}
 	kern := &env.cfg.Kernel
 	_, imageDetails, err := env.inst.BuildKernel(&instance.BuildKernelConfig{
+		ToolchainDir: bisectEnv.ToolchainDir,
+		CompilerType: env.cfg.CompilerType,
 		CompilerBin:  bisectEnv.Compiler,
 		LinkerBin:    env.cfg.Linker,
 		CcacheBin:    env.cfg.Ccache,

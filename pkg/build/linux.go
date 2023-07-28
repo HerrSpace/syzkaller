@@ -142,7 +142,7 @@ func (linux) createImage(params Params, kernelPath string) error {
 }
 
 func (linux) clean(kernelDir, targetArch string) error {
-	return runMakeImpl(targetArch, "", "", "", kernelDir, []string{"distclean"})
+	return runMake(Params{TargetArch: targetArch, KernelDir: kernelDir}, "distclean")
 }
 
 func (linux) writeFile(file string, data []byte) error {
@@ -152,27 +152,43 @@ func (linux) writeFile(file string, data []byte) error {
 	return osutil.SandboxChown(file)
 }
 
-func runMakeImpl(arch, compiler, linker, ccache, kernelDir string, extraArgs []string) error {
-	target := targets.Get(targets.Linux, arch)
-	args := LinuxMakeArgs(target, compiler, linker, ccache, "")
+func runMake(params Params, extraArgs ...string) error {
+	target := targets.Get(targets.Linux, params.TargetArch)
+	args := LinuxMakeArgs(target, params.Compiler, params.Linker, params.Ccache, "")
 	args = append(args, extraArgs...)
 	cmd := osutil.Command("make", args...)
 	if err := osutil.Sandbox(cmd, true, true); err != nil {
 		return err
 	}
-	cmd.Dir = kernelDir
+	cmd.Dir = params.KernelDir
+	toolchainPathEnv := os.Getenv("PATH")
+	if params.ToolchainDir != "" {
+		toolchainPathEnv = fmt.Sprintf("PATH=%s:%s", params.ToolchainDir, toolchainPathEnv)
+	}
+	LLVMEnv := ""    // LLVM=0 is not the same as omitting LLVM altogether, it will behave like LLVM=1.
+	LLVMIASEnv := "" // Before v5.15 LLVM=1 didn't imply LLVM_IAS=1.
+	if params.CompilerType == "clang" {
+		LLVMEnv = "LLVM=1"
+		LLVMIASEnv = "LLVM_IAS=1"
+	}
 	cmd.Env = append([]string{}, os.Environ()...)
-	// This makes the build [more] deterministic:
-	// 2 builds from the same sources should result in the same vmlinux binary.
-	// Build on a release commit and on the previous one should result in the same vmlinux too.
-	// We use it for detecting no-op changes during bisection.
 	cmd.Env = append(cmd.Env,
+		// This makes the build [more] deterministic:
+		// 2 builds from the same sources should result in the same vmlinux binary.
+		// Build on a release commit and on the previous one should result in the same vmlinux too.
+		// We use it for detecting no-op changes during bisection.
 		"KBUILD_BUILD_VERSION=0",
 		"KBUILD_BUILD_TIMESTAMP=now",
 		"KBUILD_BUILD_USER=syzkaller",
 		"KBUILD_BUILD_HOST=syzkaller",
 		"KERNELVERSION=syzkaller",
 		"LOCALVERSION=-syzkaller",
+		// Unless syzkaller explicilty tells Make to use a specific executable, Make defaults
+		// to certain compiler/linker/assembler names and looks for them in $PATH. Currently
+		// linux supports either GCC or LLVM toolchains, based on whether LLVM=1 is set.
+		LLVMEnv,
+		LLVMIASEnv,
+		toolchainPathEnv,
 	)
 	out, err := osutil.Run(time.Hour, cmd)
 	if err != nil {
@@ -181,10 +197,6 @@ func runMakeImpl(arch, compiler, linker, ccache, kernelDir string, extraArgs []s
 		return makeErr
 	}
 	return nil
-}
-
-func runMake(params Params, extraArgs ...string) error {
-	return runMakeImpl(params.TargetArch, params.Compiler, params.Linker, params.Ccache, params.KernelDir, extraArgs)
 }
 
 func LinuxMakeArgs(target *targets.Target, compiler, linker, ccache, buildDir string) []string {

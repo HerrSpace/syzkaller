@@ -43,6 +43,8 @@ type env struct {
 }
 
 type BuildKernelConfig struct {
+	ToolchainDir string
+	CompilerType string
 	CompilerBin  string
 	LinkerBin    string
 	CcacheBin    string
@@ -147,6 +149,8 @@ func (env *env) BuildKernel(buildCfg *BuildKernelConfig) (
 		VMType:       env.cfg.Type,
 		KernelDir:    env.cfg.KernelSrc,
 		OutputDir:    imageDir,
+		ToolchainDir: buildCfg.ToolchainDir,
+		CompilerType: buildCfg.CompilerType,
 		Compiler:     buildCfg.CompilerBin,
 		Linker:       buildCfg.LinkerBin,
 		Ccache:       buildCfg.CcacheBin,

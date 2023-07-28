@@ -155,17 +155,25 @@ func (ctx *linux) EnvForCommit(
 	}
 	setLinuxTagConfigs(cf, tags)
 
-	compiler := ""
+	toolchainDir := ""
 	if compilerType == "gcc" {
-		compiler = linuxGCCPath(tags, binDir, defaultCompiler)
+		toolchainDir = linuxGCCDir(tags, binDir)
 	} else if compilerType == "clang" {
-		compiler = linuxClangPath(tags, binDir, defaultCompiler)
+		toolchainDir = linuxClangDir(tags, binDir)
 	} else {
 		return nil, fmt.Errorf("unsupported bisect compiler: %v", compilerType)
 	}
 
+	// Empty toolchainDir means the tested kernel commit is new enough, that
+	// we should be able to use the defaultCompiler we use for fuzzing HEAD.
+	compiler := defaultCompiler
+	if toolchainDir != "" {
+		compiler = compilerType
+	}
+
 	env := &BisectEnv{
 		Compiler:     compiler,
+		ToolchainDir: toolchainDir,
 		KernelConfig: cf.Serialize(),
 	}
 	err = linuxFixBackports(ctx.git, backports...)
@@ -175,26 +183,26 @@ func (ctx *linux) EnvForCommit(
 	return env, nil
 }
 
-func linuxClangPath(tags map[string]bool, binDir, defaultCompiler string) string {
+func linuxClangDir(tags map[string]bool, binDir string) string {
 	version := ""
 	switch {
 	case tags["v5.9"]:
 		// Verified to work with 14.0.6.
-		return defaultCompiler
+		return ""
 	default:
 		// everything before v5.3 might not work great
 		// everything before v5.1 does not work
 		version = "9.0.1"
 	}
-	return filepath.Join(binDir, "llvm-"+version, "bin", "clang")
+	return filepath.Join(binDir, "llvm-"+version, "bin")
 }
 
-func linuxGCCPath(tags map[string]bool, binDir, defaultCompiler string) string {
+func linuxGCCDir(tags map[string]bool, binDir string) string {
 	version := ""
 	switch {
 	case tags["v5.16"]:
 		// Verified to work with 15.0.7.
-		return defaultCompiler
+		return ""
 	case tags["v5.9"]:
 		version = "10.1.0"
 	case tags["v4.12"]:
@@ -204,7 +212,7 @@ func linuxGCCPath(tags map[string]bool, binDir, defaultCompiler string) string {
 	default:
 		version = "5.5.0"
 	}
-	return filepath.Join(binDir, "gcc-"+version, "bin", "gcc")
+	return filepath.Join(binDir, "gcc-"+version, "bin")
 }
 
 func (ctx *linux) PrepareBisect() error {
