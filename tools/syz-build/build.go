@@ -20,7 +20,8 @@ var (
 	flagArch          = flag.String("arch", runtime.GOARCH, "arch to build")
 	flagVM            = flag.String("vm", "gce", "VM type to build")
 	flagKernelSrc     = flag.String("kernel_src", "", "path to kernel checkout")
-	flagCompiler      = flag.String("compiler", "", "non-defult compiler")
+	flagCompilerType  = flag.String("compiler_type", "", "e.g. 'gcc' or 'clang'")
+	flagCompiler      = flag.String("compiler", "", "full path to non-default compiler")
 	flagLinker        = flag.String("linker", "", "non-default linker")
 	flagKernelConfig  = flag.String("config", "", "kernel config file")
 	flagKernelSysctl  = flag.String("sysctl", "", "kernel sysctl file")
@@ -45,6 +46,7 @@ func main() {
 		VMType:       *flagVM,
 		KernelDir:    *flagKernelSrc,
 		OutputDir:    ".",
+		CompilerType: *flagCompilerType,
 		Compiler:     *flagCompiler,
 		Linker:       *flagLinker,
 		Ccache:       "",

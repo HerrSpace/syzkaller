@@ -325,6 +325,7 @@ func (mgr *Manager) build(kernelCommit *vcs.Commit) error {
 		VMType:       mgr.managercfg.Type,
 		KernelDir:    mgr.kernelDir,
 		OutputDir:    tmpDir,
+		CompilerType: mgr.mgrcfg.CompilerType,
 		Compiler:     mgr.mgrcfg.Compiler,
 		Linker:       mgr.mgrcfg.Linker,
 		Ccache:       mgr.mgrcfg.Ccache,

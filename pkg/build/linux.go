@@ -163,8 +163,10 @@ func runMake(params Params, extraArgs ...string) error {
 	cmd.Dir = params.KernelDir
 	toolchainPathEnv := os.Getenv("PATH")
 	if params.ToolchainDir != "" {
-		toolchainPathEnv = fmt.Sprintf("PATH=%s:%s", params.ToolchainDir, toolchainPathEnv)
+		toolchainPathEnv = fmt.Sprintf("%s:%s", params.ToolchainDir, toolchainPathEnv)
 	}
+	fmt.Printf("ToolchainDir %s\n", params.ToolchainDir)
+	fmt.Print(toolchainPathEnv + "\n")
 	cmd.Env = append([]string{}, os.Environ()...)
 	cmd.Env = append(cmd.Env,
 		// This makes the build [more] deterministic:
@@ -180,7 +182,7 @@ func runMake(params Params, extraArgs ...string) error {
 		// Unless syzkaller explicilty tells Make to use a specific executable, Make defaults
 		// to certain compiler/linker/assembler names and looks for them in $PATH. Currently
 		// linux supports either GCC or LLVM toolchains, based on whether LLVM=1 is set.
-		toolchainPathEnv,
+		"PATH="+toolchainPathEnv,
 	)
 	out, err := osutil.Run(time.Hour, cmd)
 	if err != nil {
