@@ -49,6 +49,11 @@ func (ctx *linux) PreviousReleaseTags(commit, compilerType string) ([]string, er
 		return nil, err
 	}
 
+	if compilerType == "" {
+		// CompilerType unset, assuming 'gcc' for linux version cut off.
+		compilerType = "gcc"
+	}
+
 	cutoff := ""
 	if compilerType == "gcc" {
 		// Initially we tried to stop at 3.8 because:
@@ -154,6 +159,11 @@ func (ctx *linux) EnvForCommit(
 		return nil, err
 	}
 	setLinuxTagConfigs(cf, tags)
+
+	if compilerType == "" {
+		// CompilerType unset, assuming 'gcc' for bisection compiler PATH.
+		compilerType = "gcc"
+	}
 
 	toolchainDir := ""
 	if compilerType == "gcc" {

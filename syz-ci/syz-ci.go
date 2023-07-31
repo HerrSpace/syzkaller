@@ -409,12 +409,6 @@ func loadManagerConfig(cfg *Config, mgr *ManagerConfig) error {
 	if !managerNameRe.MatchString(mgr.Name) {
 		return fmt.Errorf("param 'managers.name' has bad value: %q", mgr.Name)
 	}
-	if mgr.CompilerType == "" {
-		mgr.CompilerType = "gcc"
-	}
-	if mgr.Compiler == "" {
-		mgr.Compiler = mgr.CompilerType
-	}
 	if mgr.Branch == "" {
 		mgr.Branch = "master"
 	}

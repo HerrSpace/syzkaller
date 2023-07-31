@@ -165,12 +165,6 @@ func runMake(params Params, extraArgs ...string) error {
 	if params.ToolchainDir != "" {
 		toolchainPathEnv = fmt.Sprintf("PATH=%s:%s", params.ToolchainDir, toolchainPathEnv)
 	}
-	LLVMEnv := ""    // LLVM=0 is not the same as omitting LLVM altogether, it will behave like LLVM=1.
-	LLVMIASEnv := "" // Before v5.15 LLVM=1 didn't imply LLVM_IAS=1.
-	if params.CompilerType == "clang" {
-		LLVMEnv = "LLVM=1"
-		LLVMIASEnv = "LLVM_IAS=1"
-	}
 	cmd.Env = append([]string{}, os.Environ()...)
 	cmd.Env = append(cmd.Env,
 		// This makes the build [more] deterministic:
@@ -186,8 +180,6 @@ func runMake(params Params, extraArgs ...string) error {
 		// Unless syzkaller explicilty tells Make to use a specific executable, Make defaults
 		// to certain compiler/linker/assembler names and looks for them in $PATH. Currently
 		// linux supports either GCC or LLVM toolchains, based on whether LLVM=1 is set.
-		LLVMEnv,
-		LLVMIASEnv,
 		toolchainPathEnv,
 	)
 	out, err := osutil.Run(time.Hour, cmd)
@@ -199,7 +191,7 @@ func runMake(params Params, extraArgs ...string) error {
 	return nil
 }
 
-func LinuxMakeArgs(target *targets.Target, compiler, linker, ccache, buildDir string) []string {
+func LinuxMakeArgs(target *targets.Target, compilerType, compiler, linker, ccache, buildDir string) []string {
 	args := []string{
 		"-j", fmt.Sprint(runtime.NumCPU()),
 		"ARCH=" + target.KernelArch,
@@ -207,11 +199,11 @@ func LinuxMakeArgs(target *targets.Target, compiler, linker, ccache, buildDir st
 	if target.Triple != "" {
 		args = append(args, "CROSS_COMPILE="+target.Triple+"-")
 	}
-	if compiler == "" {
-		compiler = target.KernelCompiler
-		if target.KernelLinker != "" {
-			linker = target.KernelLinker
-		}
+	if compilerType == "clang" {
+		// LLVM=0 is not the same as omitting LLVM altogether, it will behave like LLVM=1.
+		args = append(args, "LLVM=1")
+		// Use clang as the assembler. Before v5.15 LLVM=1 didn't imply LLVM_IAS=1.
+		args = append(args, "LLVM_IAS=1")
 	}
 	if compiler != "" {
 		if ccache != "" {
