@@ -154,7 +154,7 @@ func (linux) writeFile(file string, data []byte) error {
 
 func runMake(params Params, extraArgs ...string) error {
 	target := targets.Get(targets.Linux, params.TargetArch)
-	args := LinuxMakeArgs(target, params.Compiler, params.Linker, params.Ccache, "")
+	args := LinuxMakeArgs(target, params.CompilerType, params.Compiler, params.Linker, params.Ccache, "")
 	args = append(args, extraArgs...)
 	cmd := osutil.Command("make", args...)
 	if err := osutil.Sandbox(cmd, true, true); err != nil {
